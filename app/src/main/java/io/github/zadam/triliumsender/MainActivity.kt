@@ -30,11 +30,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         setSetupStatus()
-
-        fab.setOnClickListener { view ->
-            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                    .setAction("Action", null).show()
-        }
     }
 
     public override fun onResume() {  // After a pause OR at startup
