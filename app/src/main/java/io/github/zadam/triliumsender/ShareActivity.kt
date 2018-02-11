@@ -2,6 +2,8 @@ package io.github.zadam.triliumsender
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
@@ -13,20 +15,12 @@ import okhttp3.internal.Util
 import okio.BufferedSink
 import okio.Okio
 import okio.Source
-import android.graphics.BitmapFactory
-import android.graphics.Bitmap
-import java.io.*
-import android.opengl.ETC1.getHeight
-import android.opengl.ETC1.getWidth
-import android.R.attr.bitmap
-import android.opengl.ETC1.getHeight
-import android.R.attr.maxWidth
-import android.opengl.ETC1.getWidth
-import android.R.attr.maxHeight
-
-
-
-
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.IOException
+import java.io.InputStream
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class ShareActivity : AppCompatActivity() {
@@ -78,6 +72,7 @@ class ShareActivity : AppCompatActivity() {
             val request = Request.Builder()
                     .url(triliumAddress + "/api/sender/image")
                     .addHeader("Authorization", token)
+                    .addHeader("X-Local-Date", now())
                     .post(requestBody)
                     .build()
 
@@ -106,6 +101,13 @@ class ShareActivity : AppCompatActivity() {
 
         override fun onCancelled() {
         }
+    }
+
+    private fun now(): String {
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
+        val date = dateFormat.format(Calendar.getInstance().getTime())
+
+        return date!!
     }
 
     private fun scaleImage(inputStream: InputStream, mimeType: String): InputStream {
