@@ -20,6 +20,7 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.ArrayAdapter
 import android.widget.TextView
+import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_login.*
 import okhttp3.*
 import org.json.JSONObject
@@ -200,7 +201,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
 
             val body = RequestBody.create(JSON, json.toString())
             val request = Request.Builder()
-                    .url(mTriliumAddress + "/api/login/token")
+                    .url(mTriliumAddress + "/api/sender/login")
                     .post(body)
                     .build()
 
@@ -248,6 +249,8 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 editor.putString(MainActivity.PREF_TRILIUM_ADDRESS, mTriliumAddress)
                 editor.putString(MainActivity.PREF_TOKEN, loginResult.token);
                 editor.apply()
+
+                Toast.makeText(this@LoginActivity, "Trilium connection settings have been successfully configured.", Toast.LENGTH_LONG).show()
 
                 finish()
             } else {

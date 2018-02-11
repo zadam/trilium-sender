@@ -61,15 +61,14 @@ class ShareActivity : AppCompatActivity() {
 
             val request = Request.Builder()
                     .url(triliumAddress + "/api/sender/image")
+                    .addHeader("Authorization", token)
                     .post(requestBody)
                     .build()
 
             try {
-                client.newCall(request).execute()
+                val response = client.newCall(request).execute()
 
-                // FIXME check status code
-
-                return true;
+                return response.code() == 200
             }
             catch (e: Exception) {
                 Log.e(TAG, "Sending to Trilium failed", e)
