@@ -13,13 +13,12 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".LoginActivity"
-            android:label="Trilium connection setup"></activity>
-
+            android:label="Trilium connection setup" />
         <activity
             android:name=".MainActivity"
+            android:taskAffinity=".MainActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,11 +28,23 @@
         <activity
             android:name=".ShareActivity"
             android:theme="@style/Theme.AppCompat.Translucent">
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <data android:mimeType="image/*" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".SendNoteActivity"
+            android:taskAffinity=".SendNoteActivity"
+            android:label="Add note"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
     </application>

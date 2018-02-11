@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.TextView
 
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -32,8 +33,6 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
-
-        val setupConnectionButton = findViewById<Button>(R.id.setupConnectionButton);
 
         setupConnectionButton.setOnClickListener {
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
