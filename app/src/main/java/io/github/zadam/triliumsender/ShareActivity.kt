@@ -13,8 +13,20 @@ import okhttp3.internal.Util
 import okio.BufferedSink
 import okio.Okio
 import okio.Source
-import java.io.IOException
-import java.io.InputStream
+import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import java.io.*
+import android.opengl.ETC1.getHeight
+import android.opengl.ETC1.getWidth
+import android.R.attr.bitmap
+import android.opengl.ETC1.getHeight
+import android.R.attr.maxWidth
+import android.opengl.ETC1.getWidth
+import android.R.attr.maxHeight
+
+
+
+
 
 
 class ShareActivity : AppCompatActivity() {
@@ -41,16 +53,20 @@ class ShareActivity : AppCompatActivity() {
         sendImageTask.execute(null as Void?)
     }
 
+    inner class SendImageResult (val success: Boolean, val contentLength: Long? = null)
+
     inner class SendImageTask internal constructor(private val imageUri: Uri, private val mimeType: String,
-                                                   private val triliumAddress: String, private val token: String) : AsyncTask<Void, Void, Boolean>() {
+                                                   private val triliumAddress: String, private val token: String) : AsyncTask<Void, Void, SendImageResult>() {
 
         val TAG : String = "SendImageTask"
 
-        override fun doInBackground(vararg params: Void): Boolean {
+        override fun doInBackground(vararg params: Void): SendImageResult {
 
             val imageStream = contentResolver.openInputStream(imageUri);
 
-            val imageBody = RequestBodyUtil.create(MediaType.parse(mimeType)!!, imageStream)
+            val imageBody = RequestBodyUtil.create(MediaType.parse(mimeType)!!, scaleImage(imageStream, mimeType))
+
+            val contentLength = imageBody.contentLength()
 
             val requestBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
@@ -68,18 +84,18 @@ class ShareActivity : AppCompatActivity() {
             try {
                 val response = client.newCall(request).execute()
 
-                return response.code() == 200
+                return SendImageResult(response.code() == 200, contentLength)
             }
             catch (e: Exception) {
                 Log.e(TAG, "Sending to Trilium failed", e)
 
-                return false;
+                return SendImageResult(false)
             }
         }
 
-        override fun onPostExecute(result: Boolean) {
-            if (result) {
-                Toast.makeText(this@ShareActivity, "Image sent to Trilium", Toast.LENGTH_LONG).show()
+        override fun onPostExecute(result: SendImageResult) {
+            if (result.success) {
+                Toast.makeText(this@ShareActivity, "Image sent to Trilium (" + (result.contentLength!! / 1000) + " KB)", Toast.LENGTH_LONG).show()
             }
             else {
                 Toast.makeText(this@ShareActivity, "Sending to Trilium failed", Toast.LENGTH_LONG).show()
@@ -92,6 +108,31 @@ class ShareActivity : AppCompatActivity() {
         }
     }
 
+    private fun scaleImage(inputStream: InputStream, mimeType: String): InputStream {
+        // we won't do anything with GIFs, PNGs etc. This is minority use case anyway
+        if (mimeType != "image/jpeg") {
+            return inputStream;
+        }
+
+        val options = BitmapFactory.Options()
+        val bitmap = BitmapFactory.decodeStream(inputStream, null, options)
+
+        val maxWidth = 2000
+        val maxHeight = 2000
+
+        val scale = Math.min(maxHeight.toFloat() / bitmap.width, maxWidth.toFloat() / bitmap.height)
+
+        val newWidth : Int = if (scale < 1) (bitmap.width * scale).toInt() else bitmap.width;
+        val newHeight : Int = if (scale < 1) (bitmap.height * scale).toInt() else bitmap.height;
+
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+
+        val baos = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos)
+        val bitmapdata = baos.toByteArray()
+
+        return ByteArrayInputStream(bitmapdata)
+    }
 
     object RequestBodyUtil {
         fun create(mediaType: MediaType, inputStream: InputStream): RequestBody {
