@@ -84,6 +84,8 @@ class ShareActivity : AppCompatActivity() {
             else {
                 Toast.makeText(this@ShareActivity, "Sending to Trilium failed", Toast.LENGTH_LONG).show()
             }
+
+            finish()
         }
 
         override fun onCancelled() {
