@@ -5,14 +5,14 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
+import io.github.zadam.triliumsender.services.HtmlConverter
+import io.github.zadam.triliumsender.services.TriliumSettings
+import io.github.zadam.triliumsender.services.Utils
 import kotlinx.android.synthetic.main.activity_send_note.*
-import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.json.JSONObject
-import java.text.SimpleDateFormat
-import java.util.*
 
 class SendNoteActivity : AppCompatActivity() {
 
@@ -40,21 +40,20 @@ class SendNoteActivity : AppCompatActivity() {
                                                   private val apiToken: String) : AsyncTask<Void, Void, Boolean>() {
 
         val TAG : String = "SendNoteTask"
-        val JSON = MediaType.parse("application/json; charset=utf-8")
 
         override fun doInBackground(vararg params: Void): Boolean {
             val client = OkHttpClient()
 
             val json = JSONObject()
             json.put("title", noteTitle)
-            json.put("content", escape(noteText))
+            json.put("content", HtmlConverter().convertPlainTextToHtml(noteText))
 
-            val body = RequestBody.create(JSON, json.toString())
+            val body = RequestBody.create(Utils.JSON, json.toString())
 
             val request = Request.Builder()
                     .url(triliumAddress + "/api/sender/note")
                     .addHeader("Authorization", apiToken)
-                    .addHeader("X-Local-Date", now())
+                    .addHeader("X-Local-Date", Utils.localDateStr())
                     .post(body)
                     .build()
 
@@ -78,45 +77,6 @@ class SendNoteActivity : AppCompatActivity() {
             }
 
             finish()
-        }
-
-        private fun now(): String {
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ")
-            val date = dateFormat.format(Calendar.getInstance().getTime())
-
-            return date!!
-        }
-
-        private fun escape(s: String): String {
-            val builder = StringBuilder()
-            var previousWasASpace = false
-            for (c in s.toCharArray()) {
-                if (c == ' ') {
-                    if (previousWasASpace) {
-                        builder.append("&nbsp;")
-                        previousWasASpace = false
-                        continue
-                    }
-                    previousWasASpace = true
-                } else {
-                    previousWasASpace = false
-                }
-                when (c) {
-                    '<' -> builder.append("&lt;")
-                    '>' -> builder.append("&gt;")
-                    '&' -> builder.append("&amp;")
-                    '"' -> builder.append("&quot;")
-                    '\n' -> builder.append("<p>")
-                    // We need Tab support here, because we print StackTraces as HTML
-                    '\t' -> builder.append("&nbsp; &nbsp; &nbsp;")
-                    else -> if (c.toInt() < 128) {
-                        builder.append(c)
-                    } else {
-                        builder.append("&#").append(c.toInt()).append(";")
-                    }
-                }
-            }
-            return builder.toString()
         }
 
         override fun onCancelled() {

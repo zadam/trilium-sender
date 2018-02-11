@@ -1,4 +1,4 @@
-package io.github.zadam.triliumsender
+package io.github.zadam.triliumsender.services
 
 import android.app.Activity
 import android.content.Context
