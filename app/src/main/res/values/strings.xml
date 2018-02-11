@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Trilium Sender</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_trilium_address">https://trilium_host:8080</string>
+    <string name="prompt_username">User name</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_network_error">Network error</string>
+    <string name="error_unexpected_response">Unexpected response from server</string>
+    <string name="error_incorrect_credentials">Entered credentials are incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="trilium_connection_settings">Trilium connection settings</string>
+</resources>
