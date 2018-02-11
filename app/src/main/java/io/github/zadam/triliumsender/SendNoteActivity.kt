@@ -29,7 +29,7 @@ class SendNoteActivity : AppCompatActivity() {
         }
 
         sendNoteButton.setOnClickListener { view ->
-            val sendImageTask = SendNoteTask(noteTitle.text.toString(), noteText.text.toString(), settings.triliumAddress, settings.apiToken)
+            val sendImageTask = SendNoteTask(noteTitleEditText.text.toString(), noteContentEditText.text.toString(), settings.triliumAddress, settings.apiToken)
             sendImageTask.execute(null as Void?)
         }
     }

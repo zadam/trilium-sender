@@ -13,7 +13,7 @@
         android:orientation="vertical">
 
         <EditText
-            android:id="@+id/noteTitle"
+            android:id="@+id/noteTitleEditText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ems="10"
@@ -22,7 +22,7 @@
             android:hint="Note title" />
 
         <EditText
-            android:id="@+id/noteText"
+            android:id="@+id/noteContentEditText"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="8dp"

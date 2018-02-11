@@ -5,8 +5,8 @@
     <string name="prompt_trilium_address">https://trilium_host:8080</string>
     <string name="prompt_username">User name</string>
     <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in</string>
-    <string name="action_sign_in_short">Sign in</string>
+    <string name="action_login">Login</string>
+    <string name="action_login_short">Login</string>
     <string name="error_network_error">Network error</string>
     <string name="error_unexpected_response">Unexpected response from server</string>
     <string name="error_incorrect_credentials">Entered credentials are incorrect</string>

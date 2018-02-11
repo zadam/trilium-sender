@@ -1,49 +1,35 @@
 package io.github.zadam.triliumsender
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.annotation.TargetApi
-import android.app.LoaderManager.LoaderCallbacks
-import android.content.CursorLoader
-import android.content.Loader
-import android.database.Cursor
-import android.net.Uri
 import android.os.AsyncTask
-import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.support.v7.app.AppCompatActivity
 import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
-import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
 import io.github.zadam.triliumsender.services.TriliumSettings
+import io.github.zadam.triliumsender.services.Utils
 import kotlinx.android.synthetic.main.activity_login.*
-import okhttp3.*
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody
+import okhttp3.Response
 import org.json.JSONObject
-import java.util.*
 
 
-/**
- * A login screen that offers login via email/password.
- */
-class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
-
-    val JSON = MediaType.parse("application/json; charset=utf-8")
-
+class LoginActivity : AppCompatActivity() {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private var mAuthTask: UserLoginTask? = null
+    private var loginTask: UserLoginTask? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        password.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
+        passwordEditText.setOnEditorActionListener(TextView.OnEditorActionListener { _, id, _ ->
             if (id == EditorInfo.IME_ACTION_DONE || id == EditorInfo.IME_NULL) {
                 attemptLogin()
                 return@OnEditorActionListener true
@@ -51,7 +37,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             false
         })
 
-        email_sign_in_button.setOnClickListener { attemptLogin() }
+        loginButton.setOnClickListener { attemptLogin() }
     }
 
     /**
@@ -60,26 +46,26 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
      * errors are presented and no actual login attempt is made.
      */
     private fun attemptLogin() {
-        if (mAuthTask != null) {
+        if (loginTask != null) {
             return
         }
 
         // Reset errors.
-        username.error = null
-        password.error = null
+        usernameEditText.error = null
+        passwordEditText.error = null
 
         // Store values at the time of the login attempt.
-        val triliumAddress = trilium_address.text.toString();
-        val usernameStr = username.text.toString()
-        val passwordStr = password.text.toString()
+        val triliumAddress = triliumAddressEditText.text.toString();
+        val username = usernameEditText.text.toString()
+        val password = passwordEditText.text.toString()
 
         var cancel = false
         var focusView: View? = null
 
         // Check for a valid username
-        if (TextUtils.isEmpty(usernameStr)) {
-            username.error = getString(R.string.error_field_required)
-            focusView = username
+        if (TextUtils.isEmpty(username)) {
+            usernameEditText.error = getString(R.string.error_field_required)
+            focusView = usernameEditText
             cancel = true
         }
 
@@ -88,96 +74,9 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             // form field with an error.
             focusView?.requestFocus()
         } else {
-            // Show a progress spinner, and kick off a background task to
-            // perform the user login attempt.
-            showProgress(true)
-            mAuthTask = UserLoginTask(triliumAddress, usernameStr, passwordStr)
-            mAuthTask!!.execute(null as Void?)
+            loginTask = UserLoginTask(triliumAddress, username, password)
+            loginTask!!.execute(null as Void?)
         }
-    }
-
-    /**
-     * Shows the progress UI and hides the login form.
-     */
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
-    private fun showProgress(show: Boolean) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            val shortAnimTime = resources.getInteger(android.R.integer.config_shortAnimTime).toLong()
-
-            login_form.visibility = if (show) View.GONE else View.VISIBLE
-            login_form.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha((if (show) 0 else 1).toFloat())
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            login_form.visibility = if (show) View.GONE else View.VISIBLE
-                        }
-                    })
-
-            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-            login_progress.animate()
-                    .setDuration(shortAnimTime)
-                    .alpha((if (show) 1 else 0).toFloat())
-                    .setListener(object : AnimatorListenerAdapter() {
-                        override fun onAnimationEnd(animation: Animator) {
-                            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-                        }
-                    })
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            login_progress.visibility = if (show) View.VISIBLE else View.GONE
-            login_form.visibility = if (show) View.GONE else View.VISIBLE
-        }
-    }
-
-    override fun onCreateLoader(i: Int, bundle: Bundle?): Loader<Cursor> {
-        return CursorLoader(this,
-                // Retrieve data rows for the device user's 'profile' contact.
-                Uri.withAppendedPath(ContactsContract.Profile.CONTENT_URI,
-                        ContactsContract.Contacts.Data.CONTENT_DIRECTORY), ProfileQuery.PROJECTION,
-
-                // Select only email addresses.
-                ContactsContract.Contacts.Data.MIMETYPE + " = ?", arrayOf(ContactsContract.CommonDataKinds.Email
-                .CONTENT_ITEM_TYPE),
-
-                // Show primary email addresses first. Note that there won't be
-                // a primary email address if the user hasn't specified one.
-                ContactsContract.Contacts.Data.IS_PRIMARY + " DESC")
-    }
-
-    override fun onLoadFinished(cursorLoader: Loader<Cursor>, cursor: Cursor) {
-        val emails = ArrayList<String>()
-        cursor.moveToFirst()
-        while (!cursor.isAfterLast) {
-            emails.add(cursor.getString(ProfileQuery.ADDRESS))
-            cursor.moveToNext()
-        }
-
-        addEmailsToAutoComplete(emails)
-    }
-
-    override fun onLoaderReset(cursorLoader: Loader<Cursor>) {
-
-    }
-
-    private fun addEmailsToAutoComplete(emailAddressCollection: List<String>) {
-        //Create adapter to tell the AutoCompleteTextView what to show in its dropdown list.
-        val adapter = ArrayAdapter(this@LoginActivity,
-                android.R.layout.simple_dropdown_item_1line, emailAddressCollection)
-
-        username.setAdapter(adapter)
-    }
-
-    object ProfileQuery {
-        val PROJECTION = arrayOf(
-                ContactsContract.CommonDataKinds.Email.ADDRESS,
-                ContactsContract.CommonDataKinds.Email.IS_PRIMARY)
-        val ADDRESS = 0
-        val IS_PRIMARY = 1
     }
 
     inner class LoginResult (val success: Boolean, val errorCode : Int?,
@@ -187,7 +86,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
      * Represents an asynchronous login/registration task used to authenticate
      * the user.
      */
-    inner class UserLoginTask internal constructor(private val mTriliumAddress: String, private val mUsername: String, private val mPassword: String) : AsyncTask<Void, Void, LoginResult>() {
+    inner class UserLoginTask internal constructor(private val triliumAddress: String, private val username: String, private val password: String) : AsyncTask<Void, Void, LoginResult>() {
 
         val TAG : String = "UserLoginTask"
 
@@ -196,12 +95,12 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             val client = OkHttpClient()
 
             val json = JSONObject()
-            json.put("username", mUsername)
-            json.put("password", mPassword)
+            json.put("username", username)
+            json.put("password", password)
 
-            val body = RequestBody.create(JSON, json.toString())
+            val body = RequestBody.create(Utils.JSON, json.toString())
             val request = Request.Builder()
-                    .url(mTriliumAddress + "/api/sender/login")
+                    .url(triliumAddress + "/api/sender/login")
                     .post(body)
                     .build()
 
@@ -239,11 +138,10 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         }
 
         override fun onPostExecute(loginResult: LoginResult) {
-            mAuthTask = null
-            showProgress(false)
+            loginTask = null
 
             if (loginResult.success) {
-                TriliumSettings(this@LoginActivity).save(mTriliumAddress, loginResult.token!!)
+                TriliumSettings(this@LoginActivity).save(triliumAddress, loginResult.token!!)
 
                 Toast.makeText(this@LoginActivity, "Trilium connection settings have been successfully configured.", Toast.LENGTH_LONG).show()
 
@@ -252,12 +150,12 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
                 if (loginResult.errorCode == R.string.error_network_error
                     || loginResult.errorCode == R.string.error_unexpected_response) {
 
-                    trilium_address.error = getString(loginResult.errorCode)
-                    trilium_address.requestFocus()
+                    triliumAddressEditText.error = getString(loginResult.errorCode)
+                    triliumAddressEditText.requestFocus()
                 }
                 else if (loginResult.errorCode == R.string.error_incorrect_credentials) {
-                    password.error = getString(loginResult.errorCode)
-                    password.requestFocus()
+                    passwordEditText.error = getString(loginResult.errorCode)
+                    passwordEditText.requestFocus()
                 }
                 else {
                     throw RuntimeException("Unknown code: " + loginResult.errorCode);
@@ -266,8 +164,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
         }
 
         override fun onCancelled() {
-            mAuthTask = null
-            showProgress(false)
+            loginTask = null
         }
     }
 }
