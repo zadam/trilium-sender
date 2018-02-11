@@ -243,12 +243,7 @@ class LoginActivity : AppCompatActivity(), LoaderCallbacks<Cursor> {
             showProgress(false)
 
             if (loginResult.success) {
-                val prefs = this@LoginActivity.getSharedPreferences(MainActivity.PREFRENCES_NAME, Context.MODE_PRIVATE);
-
-                val editor = prefs.edit()
-                editor.putString(MainActivity.PREF_TRILIUM_ADDRESS, mTriliumAddress)
-                editor.putString(MainActivity.PREF_TOKEN, loginResult.token);
-                editor.apply()
+                TriliumSettings(this@LoginActivity).save(mTriliumAddress, loginResult.token!!)
 
                 Toast.makeText(this@LoginActivity, "Trilium connection settings have been successfully configured.", Toast.LENGTH_LONG).show()
 

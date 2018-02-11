@@ -13,22 +13,14 @@ import kotlinx.android.synthetic.main.content_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    companion object {
-        const val PREFRENCES_NAME = "io.github.zadam.triliumsender";
-        const val PREF_TRILIUM_ADDRESS = "trilium_address";
-        const val PREF_TOKEN = "token";
-    }
+    // to reset the application to uninitialized state, only for dev/testing purposes
+    private val resetSetup = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (false) {
-            val prefs = getSharedPreferences(PREFRENCES_NAME, Context.MODE_PRIVATE);
-
-            val editor = prefs.edit()
-            editor.putString(PREF_TRILIUM_ADDRESS, "")
-            editor.putString(PREF_TOKEN, "")
-            editor.apply()
+        if (resetSetup) {
+            TriliumSettings(this).save("", "")
         }
 
         setContentView(R.layout.activity_main)
@@ -54,18 +46,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setSetupStatus() {
-        val prefs = getSharedPreferences(PREFRENCES_NAME, Context.MODE_PRIVATE)
+        val settings = TriliumSettings(this)
 
-        val triliumAddress = prefs.getString(PREF_TRILIUM_ADDRESS, "")
-        val token = prefs.getString(PREF_TOKEN, "")
-
-        val setupStatus = findViewById<TextView>(R.id.setupStatusTextView);
-
-        if (triliumAddress.isBlank() || token.isBlank()) {
-            setupStatus.setText("Trilium connection setup isn't finished yet.");
+        if (!settings.isConfigured()) {
+            setupStatusTextView.text = "Trilium connection setup isn't finished yet.";
         } else {
-            setupStatus.setText("Trilium connection has been set up for address: " + triliumAddress + ". " +
-                    "You can still change it by tapping the button below.");
+            setupStatusTextView.text = "Trilium connection has been set up for address: " + settings.triliumAddress + ". " +
+                    "You can still change it by tapping the button below.";
         }
     }
 }

@@ -1,6 +1,5 @@
 package io.github.zadam.triliumsender
 
-import android.content.Context
 import android.os.AsyncTask
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -21,25 +20,24 @@ class SendNoteActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_send_note)
 
-        val prefs = this.getSharedPreferences(MainActivity.PREFRENCES_NAME, Context.MODE_PRIVATE);
+        val settings = TriliumSettings(this)
 
-        val triliumAddress = prefs.getString(MainActivity.PREF_TRILIUM_ADDRESS, "");
-        val token = prefs.getString(MainActivity.PREF_TOKEN, "");
-
-        if (triliumAddress.isBlank() || token.isBlank()) {
+        if (!settings.isConfigured()) {
             Toast.makeText(this, "Trilium Sender is not configured. Can't sent the image.", Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
         sendNoteButton.setOnClickListener { view ->
-            val sendImageTask = SendNoteTask(noteTitle.text.toString(), noteText.text.toString(), triliumAddress, token)
+            val sendImageTask = SendNoteTask(noteTitle.text.toString(), noteText.text.toString(), settings.triliumAddress, settings.apiToken)
             sendImageTask.execute(null as Void?)
         }
     }
 
-    inner class SendNoteTask internal constructor(private val noteTitle: String, private val noteText: String,
-                                                  private val triliumAddress: String, private val token: String) : AsyncTask<Void, Void, Boolean>() {
+    inner class SendNoteTask internal constructor(private val noteTitle: String,
+                                                  private val noteText: String,
+                                                  private val triliumAddress: String,
+                                                  private val apiToken: String) : AsyncTask<Void, Void, Boolean>() {
 
         val TAG : String = "SendNoteTask"
         val JSON = MediaType.parse("application/json; charset=utf-8")
@@ -55,7 +53,7 @@ class SendNoteActivity : AppCompatActivity() {
 
             val request = Request.Builder()
                     .url(triliumAddress + "/api/sender/note")
-                    .addHeader("Authorization", token)
+                    .addHeader("Authorization", apiToken)
                     .addHeader("X-Local-Date", now())
                     .post(body)
                     .build()

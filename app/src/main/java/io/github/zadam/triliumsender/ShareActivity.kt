@@ -1,6 +1,5 @@
 package io.github.zadam.triliumsender
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -29,12 +28,9 @@ class ShareActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_share)
 
-        val prefs = this.getSharedPreferences(MainActivity.PREFRENCES_NAME, Context.MODE_PRIVATE);
+        val settings = TriliumSettings(this)
 
-        val triliumAddress = prefs.getString(MainActivity.PREF_TRILIUM_ADDRESS, "");
-        val token = prefs.getString(MainActivity.PREF_TOKEN, "");
-
-        if (triliumAddress.isBlank() || token.isBlank()) {
+        if (!settings.isConfigured()) {
             Toast.makeText(this, "Trilium Sender is not configured. Can't sent the image.", Toast.LENGTH_LONG).show()
             finish()
             return
@@ -43,14 +39,16 @@ class ShareActivity : AppCompatActivity() {
         val imageUri = intent.extras!!.get(Intent.EXTRA_STREAM) as Uri
         val mimeType = contentResolver.getType(imageUri)
 
-        val sendImageTask = SendImageTask(imageUri, mimeType, triliumAddress, token)
+        val sendImageTask = SendImageTask(imageUri, mimeType, settings.triliumAddress, settings.apiToken)
         sendImageTask.execute(null as Void?)
     }
 
     inner class SendImageResult (val success: Boolean, val contentLength: Long? = null)
 
-    inner class SendImageTask internal constructor(private val imageUri: Uri, private val mimeType: String,
-                                                   private val triliumAddress: String, private val token: String) : AsyncTask<Void, Void, SendImageResult>() {
+    inner class SendImageTask internal constructor(private val imageUri: Uri,
+                                                   private val mimeType: String,
+                                                   private val triliumAddress: String,
+                                                   private val apiToken: String) : AsyncTask<Void, Void, SendImageResult>() {
 
         val TAG : String = "SendImageTask"
 
@@ -71,7 +69,7 @@ class ShareActivity : AppCompatActivity() {
 
             val request = Request.Builder()
                     .url(triliumAddress + "/api/sender/image")
-                    .addHeader("Authorization", token)
+                    .addHeader("Authorization", apiToken)
                     .addHeader("X-Local-Date", now())
                     .post(requestBody)
                     .build()
