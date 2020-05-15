@@ -13,7 +13,6 @@ import io.github.zadam.triliumsender.services.TriliumSettings
 import io.github.zadam.triliumsender.services.Utils
 import okhttp3.MediaType
 import okhttp3.MultipartBody
-import okhttp3.OkHttpClient
 import okhttp3.Request
 
 
@@ -51,7 +50,7 @@ class ShareActivity : AppCompatActivity() {
 
             val (requestBody, contentLength) = buildRequestBody()
 
-            val client = OkHttpClient()
+            val client = CustomTrustClient.getClient()
 
             val request = Request.Builder()
                     .url(triliumAddress + "/api/sender/image")
