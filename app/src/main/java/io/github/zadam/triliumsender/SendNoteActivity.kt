@@ -9,7 +9,6 @@ import io.github.zadam.triliumsender.services.HtmlConverter
 import io.github.zadam.triliumsender.services.TriliumSettings
 import io.github.zadam.triliumsender.services.Utils
 import kotlinx.android.synthetic.main.activity_send_note.*
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import org.json.JSONObject
@@ -28,7 +27,7 @@ class SendNoteActivity : AppCompatActivity() {
             return
         }
 
-        sendNoteButton.setOnClickListener { view ->
+        sendNoteButton.setOnClickListener { _ ->
             val sendImageTask = SendNoteTask(noteTitleEditText.text.toString(), noteContentEditText.text.toString(), settings.triliumAddress, settings.apiToken)
             sendImageTask.execute(null as Void?)
         }
@@ -42,7 +41,7 @@ class SendNoteActivity : AppCompatActivity() {
         val TAG : String = "SendNoteTask"
 
         override fun doInBackground(vararg params: Void): Boolean {
-            val client = OkHttpClient()
+            val client = CustomTrustClient.getClient()
 
             val json = JSONObject()
             json.put("title", noteTitle)

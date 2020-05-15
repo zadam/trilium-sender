@@ -7,12 +7,12 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import io.github.zadam.triliumsender.services.TriliumSettings
 import io.github.zadam.triliumsender.services.Utils
 import kotlinx.android.synthetic.main.activity_login.*
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.Response
@@ -37,7 +37,31 @@ class LoginActivity : AppCompatActivity() {
             false
         })
 
-        loginButton.setOnClickListener { attemptLogin() }
+        trustModeRadio.setOnCheckedChangeListener(
+                RadioGroup.OnCheckedChangeListener { radio, _ ->
+                    val checked = radio.checkedRadioButtonId
+
+                    if (checked == useDefaultTrust.id) {
+                        trustAllWarning.visibility = View.GONE
+                        customCertInput.visibility = View.GONE
+                    } else if (checked == useCustomCert.id) {
+                        trustAllWarning.visibility = View.GONE
+                        customCertInput.visibility = View.VISIBLE
+                    } else {
+                        trustAllWarning.visibility = View.VISIBLE
+                        customCertInput.visibility = View.GONE
+                    }
+                }
+        )
+
+        loginButton.setOnClickListener {
+            if (trustModeRadio.checkedRadioButtonId == useCustomCert.id && customCertInput.text.isEmpty()) {
+                Toast.makeText(this, "Missing Cert", "Missing Cert".length).show()
+            }
+            else {
+                attemptLogin()
+            }
+        }
     }
 
     /**
@@ -92,7 +116,16 @@ class LoginActivity : AppCompatActivity() {
 
         override fun doInBackground(vararg params: Void): LoginResult {
 
-            val client = OkHttpClient()
+            val client = if (trustModeRadio.checkedRadioButtonId == useDefaultTrust.id) {
+                CustomTrustClient.initializeClientWithDefaultTrust()
+            }
+            else if (trustModeRadio.checkedRadioButtonId == useCustomCert.id) {
+                CustomTrustClient.initializeClientWithCustomCert(customCertInput.text.toString())
+            }
+            else {
+                CustomTrustClient.initializeClientAndTrustAll()
+            }
+
 
             val json = JSONObject()
             json.put("username", username)

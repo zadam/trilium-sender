@@ -23,7 +23,8 @@
     <ScrollView
         android:id="@+id/login_form"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_weight="1">
 
         <LinearLayout
             android:id="@+id/email_login_form"
@@ -79,15 +80,64 @@
 
             </android.support.design.widget.TextInputLayout>
 
-            <Button
-                android:id="@+id/loginButton"
-                style="?android:textAppearanceSmall"
+            <RadioGroup
+                android:id="@+id/trustModeRadio"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:checkedButton="@id/useDefaultTrust"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/useDefaultTrust"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Default trust" />
+
+                <RadioButton
+                    android:id="@+id/useCustomCert"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Use custom cert" />
+
+                <RadioButton
+                    android:id="@+id/trustAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Trust all certs" />
+
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/trustAllWarning"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="This could expose you to man-in-the-middle attacks, among other security risk. You should at least use a self-signed cert."
+                android:visibility="invisible" />
+
+            <EditText
+                android:id="@+id/customCertInput"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/action_login"
-                android:textStyle="bold" />
+                android:ems="10"
+                android:gravity="start|top"
+                android:inputType="textMultiLine"
+                android:visibility="invisible" />
 
         </LinearLayout>
     </ScrollView>
+
+    <Button
+        android:id="@+id/loginButton"
+        style="?android:textAppearanceSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/action_login"
+        android:textStyle="bold"
+        android:fitsSystemWindows="true"
+        android:layout_gravity="center_horizontal|bottom" />
 </LinearLayout>
