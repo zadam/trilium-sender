@@ -2,10 +2,10 @@ package io.github.zadam.triliumsender.services
 
 import okhttp3.MediaType
 import okhttp3.RequestBody
-import okhttp3.internal.Util
+import okhttp3.internal.closeQuietly
 import okio.BufferedSink
-import okio.Okio
 import okio.Source
+import okio.source
 import java.io.IOException
 import java.io.InputStream
 
@@ -17,10 +17,10 @@ object RequestBodyUtil {
             }
 
             override fun contentLength(): Long {
-                try {
-                    return inputStream.available().toLong()
+                return try {
+                    inputStream.available().toLong()
                 } catch (e: IOException) {
-                    return 0
+                    0
                 }
             }
 
@@ -28,10 +28,10 @@ object RequestBodyUtil {
             override fun writeTo(sink: BufferedSink) {
                 var source: Source? = null
                 try {
-                    source = Okio.source(inputStream)
-                    sink.writeAll(source!!)
+                    source = inputStream.source()
+                    sink.writeAll(source)
                 } finally {
-                    Util.closeQuietly(source)
+                    source?.closeQuietly()
                 }
             }
         }

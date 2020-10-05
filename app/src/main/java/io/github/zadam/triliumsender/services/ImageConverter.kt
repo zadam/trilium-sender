@@ -5,12 +5,13 @@ import android.graphics.BitmapFactory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import kotlin.math.min
 
 class ImageConverter {
-    fun scaleImage(inputStream: InputStream, mimeType: String): InputStream {
+    fun scaleImage(inputStream: InputStream, mimeType: String?): InputStream {
         // we won't do anything with GIFs, PNGs etc. This is minority use case anyway
         if (mimeType != "image/jpeg") {
-            return inputStream;
+            return inputStream
         }
 
         val options = BitmapFactory.Options()
@@ -18,18 +19,20 @@ class ImageConverter {
 
         val maxWidth = 2000
         val maxHeight = 2000
+        val width = bitmap!!.width
+        val height = bitmap.height
+        val scale = min(maxHeight.toFloat() / width, maxWidth.toFloat() / height)
 
-        val scale = Math.min(maxHeight.toFloat() / bitmap.width, maxWidth.toFloat() / bitmap.height)
+        val newWidth: Int = if (scale < 1) (width * scale).toInt() else width
+        val newHeight: Int = if (scale < 1) (height * scale).toInt() else height
 
-        val newWidth: Int = if (scale < 1) (bitmap.width * scale).toInt() else bitmap.width;
-        val newHeight: Int = if (scale < 1) (bitmap.height * scale).toInt() else bitmap.height;
+        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
 
-        val scaledBitmap = Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+        val outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 75, outputStream)
+        val bitmapData = outputStream.toByteArray()
 
-        val baos = ByteArrayOutputStream()
-        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 75, baos)
-        val bitmapdata = baos.toByteArray()
+        return ByteArrayInputStream(bitmapData)
 
-        return ByteArrayInputStream(bitmapdata)
     }
 }

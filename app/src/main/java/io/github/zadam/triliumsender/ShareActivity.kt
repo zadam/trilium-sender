@@ -2,16 +2,19 @@ package io.github.zadam.triliumsender
 
 import android.content.Intent
 import android.net.Uri
-import android.os.AsyncTask
 import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import io.github.zadam.triliumsender.services.ImageConverter
 import io.github.zadam.triliumsender.services.RequestBodyUtil
 import io.github.zadam.triliumsender.services.TriliumSettings
 import io.github.zadam.triliumsender.services.Utils
-import okhttp3.MediaType
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,80 +29,92 @@ class ShareActivity : AppCompatActivity() {
         val settings = TriliumSettings(this)
 
         if (!settings.isConfigured()) {
-            Toast.makeText(this, "Trilium Sender is not configured. Can't sent the image.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.sender_not_configured_image), Toast.LENGTH_LONG).show()
             finish()
             return
         }
 
         val imageUri = intent.extras!!.get(Intent.EXTRA_STREAM) as Uri
-        val mimeType = contentResolver.getType(imageUri)
+        val mimeType = contentResolver.getType(imageUri)!!
 
-        val sendImageTask = SendImageTask(imageUri, mimeType, settings.triliumAddress, settings.apiToken)
-        sendImageTask.execute(null as Void?)
+        // Kick off a coroutine to handle the actual image send without blocking the UI.
+        // Since we want to be able to fire Toasts, we should use the Main (UI) scope.
+        val uiScope = CoroutineScope(Dispatchers.Main)
+        uiScope.launch {
+            val result = doSendImage(imageUri, mimeType, settings.triliumAddress, settings.apiToken)
+            if (result.success) {
+                Toast.makeText(this@ShareActivity, getString(R.string.sending_image_complete_size, (result.contentLength!! / 1000)), Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this@ShareActivity, getString(R.string.sending_failed), Toast.LENGTH_LONG).show()
+            }
+            // Finish the activity either way- there's no editor UI here, so the user can't really lose data like on the Note sender.
+            // They just need to attempt to re-share once they fix their connection.
+            finish()
+        }
     }
 
-    inner class SendImageResult (val success: Boolean, val contentLength: Long? = null)
+    /**
+     * Given an input image, scale the image down to a maximum size, and build a request body for sending the scaled image.
+     *
+     * @param imageUri A URI to the image to build a request of.
+     * @param mimeType The MIME type of the image, used in scaling the image.
+     *
+     * @return A pair, containing the multipart request body, and the contentLength of the request body.
+     */
+    private fun buildRequestBody(imageUri: Uri, mimeType: String): Pair<MultipartBody, Long> {
+        val imageStream = contentResolver.openInputStream(imageUri)
+        val scaledImage = ImageConverter().scaleImage(imageStream!!, mimeType)
 
-    inner class SendImageTask internal constructor(private val imageUri: Uri,
-                                                   private val mimeType: String,
-                                                   private val triliumAddress: String,
-                                                   private val apiToken: String) : AsyncTask<Void, Void, SendImageResult>() {
+        val imageBody = RequestBodyUtil.create(mimeType.toMediaType(), scaledImage)
 
-        val TAG : String = "SendImageTask"
+        val contentLength = imageBody.contentLength()
 
-        override fun doInBackground(vararg params: Void): SendImageResult {
+        val requestBody = MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("upload", "image", imageBody)
+                .build()
+        return Pair(requestBody, contentLength)
+    }
 
-            val (requestBody, contentLength) = buildRequestBody()
+    /**
+     * Attempts to send an image to the Trilium server. Runs in the IO thread, to avoid blocking the UI thread.
+     *
+     * @param imageUri, a URI for an image to send.
+     * @param mimeType, the MIME type of the image to send.
+     * @param triliumAddress, the address of the Trilium instance to send the image to.
+     * @param apiToken, the API token for communicating with the Trilium instance.
+     *
+     * @return the result of the attempted image send.
+     */
+    private suspend fun doSendImage(imageUri: Uri, mimeType: String, triliumAddress: String, apiToken: String): SendImageResult {
+        return withContext(Dispatchers.IO) {
+            val tag = "SendImageCoroutine"
+
+            val (requestBody, contentLength) = buildRequestBody(imageUri, mimeType)
 
             val client = OkHttpClient()
 
             val request = Request.Builder()
-                    .url(triliumAddress + "/api/sender/image")
+                    .url("$triliumAddress/api/sender/image")
                     .addHeader("Authorization", apiToken)
                     .addHeader("X-Local-Date", Utils.localDateStr())
                     .post(requestBody)
                     .build()
 
-            try {
+            return@withContext try {
+
+                // In the Dispatchers.IO context, blocking http requests are allowed.
+                @Suppress("BlockingMethodInNonBlockingContext")
                 val response = client.newCall(request).execute()
 
-                return SendImageResult(response.code() == 200, contentLength)
+                SendImageResult(response.code == 200, contentLength)
+            } catch (e: Exception) {
+                Log.e(tag, getString(R.string.sending_failed), e)
+
+                SendImageResult(false)
             }
-            catch (e: Exception) {
-                Log.e(TAG, "Sending to Trilium failed", e)
-
-                return SendImageResult(false)
-            }
-        }
-
-        private fun buildRequestBody(): Pair<MultipartBody, Long> {
-            val imageStream = contentResolver.openInputStream(imageUri);
-            val scaledImage = ImageConverter().scaleImage(imageStream, mimeType)
-
-            val imageBody = RequestBodyUtil.create(MediaType.parse(mimeType)!!, scaledImage)
-
-            val contentLength = imageBody.contentLength()
-
-            val requestBody = MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("upload", "image", imageBody)
-                    .build()
-            return Pair(requestBody, contentLength)
-        }
-
-
-        override fun onPostExecute(result: SendImageResult) {
-            if (result.success) {
-                Toast.makeText(this@ShareActivity, "Image sent to Trilium (" + (result.contentLength!! / 1000) + " KB)", Toast.LENGTH_LONG).show()
-            }
-            else {
-                Toast.makeText(this@ShareActivity, "Sending to Trilium failed", Toast.LENGTH_LONG).show()
-            }
-
-            finish()
-        }
-
-        override fun onCancelled() {
         }
     }
+
+    inner class SendImageResult(val success: Boolean, val contentLength: Long? = null)
 }

@@ -1,7 +1,5 @@
 <resources>
     <string name="app_name">Trilium Sender</string>
-
-    <!-- Strings related to login -->
     <string name="prompt_trilium_address">https://trilium_host:8080</string>
     <string name="prompt_username">User name</string>
     <string name="prompt_password">Password</string>
@@ -11,9 +9,18 @@
     <string name="error_unexpected_response">Unexpected response from server</string>
     <string name="error_incorrect_credentials">Entered credentials are incorrect</string>
     <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
-    <string name="title_activity_main">MainActivity</string>
     <string name="trilium_connection_settings">Trilium connection settings</string>
+    <string name="note_title">Note title</string>
+    <string name="note_text">Note text</string>
+    <string name="setup_not_complete">Trilium connection setup isn\'t finished yet.</string>
+    <string name="setup_is_complete">Trilium connection has been set up for address: %s. You can still change it by tapping the button below.</string>
+    <string name="please_use_other_shortcut">Please note that this view is used only for setup. For adding notes, use another shortcut called \'Add note\'. To add images, you need to share it to \'Trilium Sender\' from gallery app.</string>
+    <string name="url_invalid">URL is invalid.</string>
+    <string name="connection_configured_correctly">Trilium connection settings have been successfully configured.</string>
+    <string name="sender_not_configured_image">Trilium Sender is not configured. Can\'t send the image.</string>
+    <string name="sending_failed">Sending to Trilium failed.</string>
+    <string name="sending_image_complete_size">Image sent to Trilium. (%d KB)</string>
+    <string name="sender_not_configured_note">Trilium Sender is not configured. Can\'t compose note.</string>
+    <string name="sending_note_complete">Note sent to Trilium.</string>
+    <string name="sending_note_failed">Sending note to Trilium failed.</string>
 </resources>
