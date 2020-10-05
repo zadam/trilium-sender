@@ -2,10 +2,8 @@ package io.github.zadam.triliumsender
 
 import android.content.Intent
 import android.os.Bundle
-import android.support.design.widget.Snackbar
-import android.support.v7.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatActivity
 import io.github.zadam.triliumsender.services.TriliumSettings
-
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
@@ -42,10 +40,9 @@ class MainActivity : AppCompatActivity() {
         val settings = TriliumSettings(this)
 
         if (!settings.isConfigured()) {
-            setupStatusTextView.text = "Trilium connection setup isn't finished yet.";
+            setupStatusTextView.text = getString(R.string.setup_not_complete)
         } else {
-            setupStatusTextView.text = "Trilium connection has been set up for address: " + settings.triliumAddress + ". " +
-                    "You can still change it by tapping the button below.";
+            setupStatusTextView.text = getString(R.string.setup_is_complete, settings.triliumAddress)
         }
     }
 }

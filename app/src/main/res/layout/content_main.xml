@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -11,11 +11,11 @@
     <TextView
         android:id="@+id/setupStatusTextView"
         android:layout_width="350dp"
-        android:layout_height="70dp"
-        android:layout_marginBottom="20dp"
-        android:layout_marginEnd="4dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
         android:layout_marginTop="8dp"
+        android:layout_marginEnd="4dp"
+        android:layout_marginBottom="20dp"
         android:text=""
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/setupConnectionButton"
@@ -46,11 +46,11 @@
         android:layout_marginEnd="4dp"
         android:layout_marginStart="4dp"
         android:layout_marginTop="8dp"
-        android:text="Please note that this view is used only for setup. For adding notes, use another shortcut called 'Add note' and to add image, you need to share it to 'Trilium Sender' from gallery app."
+        android:text="@string/please_use_other_shortcut"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/setupConnectionButton" />
 
-</android.support.constraint.ConstraintLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
