@@ -1,4 +1,7 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!--suppress AndroidElementNotAllowed -->
+<!-- The above suppression is necessary due to the <queries> tag, which is meaningless in older SDKs
+     but is critical to looking up package names on Android devices running SDK 30.-->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.github.zadam.triliumsender">
 
@@ -16,8 +19,8 @@
             android:label="Trilium connection setup" />
         <activity
             android:name=".MainActivity"
-            android:taskAffinity=".MainActivity"
             android:label="@string/app_name"
+            android:taskAffinity=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,15 +41,32 @@
         </activity>
         <activity
             android:name=".SendNoteActivity"
-            android:taskAffinity=".SendNoteActivity"
             android:label="Add note"
+            android:taskAffinity=".SendNoteActivity"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
         </activity>
     </application>
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="image/*" />
+        </intent>
+    </queries>
 </manifest>

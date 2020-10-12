@@ -1,7 +1,10 @@
 package io.github.zadam.triliumsender
 
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import io.github.zadam.triliumsender.services.HtmlConverter
@@ -20,6 +23,7 @@ import org.json.JSONObject
 class SendNoteActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val tag = "SendNoteOnCreateHandler"
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_send_note)
 
@@ -30,6 +34,18 @@ class SendNoteActivity : AppCompatActivity() {
             Toast.makeText(this, getString(R.string.sender_not_configured_note), Toast.LENGTH_LONG).show()
             finish()
             return
+        }
+
+        // If we're a share-intent, pre-populate the note.
+        when (intent?.action) {
+            Intent.ACTION_SEND -> {
+                if ("text/plain" == intent.type) {
+                    handleSendText(intent)
+                } else {
+                    // We don't yet have text/html support.
+                    Log.e(tag, "Don't have a handler for share type ${intent.type}.")
+                }
+            }
         }
 
         sendNoteButton.setOnClickListener {
@@ -52,6 +68,50 @@ class SendNoteActivity : AppCompatActivity() {
     }
 
     /**
+     * If we're the target of a SEND intent, pre-fill the note's contents.
+     *
+     * @param intent, the Intent object, already verified to be of type text/plain.
+     */
+    private fun handleSendText(intent: Intent) {
+        val tag = "SendNoteHandleSendText"
+
+        // Many apps will suggest a "Text Subject", as in an email.
+        val suggestedSubject = intent.getStringExtra((Intent.EXTRA_SUBJECT))
+        if (suggestedSubject != null && suggestedSubject.isNotEmpty()) {
+            // Use suggested subject.
+            noteTitleEditText.setText(suggestedSubject, TextView.BufferType.EDITABLE)
+        } else {
+            // Try to craft a sane default title.
+            var referrerName = "Android"
+
+            // SDKs greater than 23 can access the referrer's package URI...
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP_MR1) {
+                val referrer = this.referrer
+                if (referrer != null && referrer.host != null) {
+                    // Which we can use to get an AppInfo handle...
+                    try {
+                        // Which we can use to get an app label!
+                        val referrerInfo = packageManager.getApplicationInfo(referrer.host.toString(), 0)
+                        val potentialReferrerName = referrerInfo.loadLabel(packageManager).toString()
+                        // Sanity check: is it an empty string?
+                        if (potentialReferrerName.isNotEmpty()) {
+                            referrerName = potentialReferrerName
+                        }
+                    } catch (e: PackageManager.NameNotFoundException) {
+                        // Oh well, we have the default name to fall back on.
+                        Log.w(tag, "Could not find package label for package name ${referrer.host}")
+                    }
+                }
+            }
+            // Ultimately, set the note title.
+            noteTitleEditText.setText(getString(R.string.share_note_title, referrerName), TextView.BufferType.EDITABLE)
+        }
+        // And populate the note body!
+        noteContentEditText.setText(intent.getStringExtra(Intent.EXTRA_TEXT), TextView.BufferType.EDITABLE)
+    }
+
+
+    /**
      * Attempts to send a note to the Trilium server.
      *
      * Runs in the IO thread, to avoid blocking the UI thread.
@@ -70,7 +130,13 @@ class SendNoteActivity : AppCompatActivity() {
             val client = OkHttpClient()
 
             val json = JSONObject()
-            json.put("title", noteTitle)
+
+            if (noteTitle.isEmpty()) {
+                // API does not allow empty note titles, so use a default value if the user doesn't set one.
+                json.put("title", "Note from Android")
+            } else {
+                json.put("title", noteTitle)
+            }
             json.put("content", HtmlConverter().convertPlainTextToHtml(noteText))
 
             val body = json.toString().toRequestBody(Utils.JSON)

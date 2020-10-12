@@ -23,4 +23,5 @@
     <string name="sender_not_configured_note">Trilium Sender is not configured. Can\'t compose note.</string>
     <string name="sending_note_complete">Note sent to Trilium.</string>
     <string name="sending_note_failed">Sending note to Trilium failed.</string>
+    <string name="share_note_title">Shared from %s</string>
 </resources>
