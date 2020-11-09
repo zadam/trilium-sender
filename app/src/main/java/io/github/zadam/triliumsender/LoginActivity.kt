@@ -3,6 +3,7 @@ package io.github.zadam.triliumsender
 import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import android.widget.Toast
@@ -37,6 +38,17 @@ class LoginActivity : AppCompatActivity() {
         })
 
         loginButton.setOnClickListener { attemptLogin() }
+
+        // Check if we're already set-up.
+        setSetupStatus()
+    }
+
+    override fun onStop() {
+        // Save edited label or address. Use apitoken from existing settings.
+        val settings = TriliumSettings(this)
+        TriliumSettings(this@LoginActivity).save(triliumAddressEditText.text.toString(), settings.apiToken, labelEditText.text.toString())
+        super.onStop()
+
     }
 
     /**
@@ -59,6 +71,7 @@ class LoginActivity : AppCompatActivity() {
         val triliumAddress = triliumAddressEditText.text.toString()
         val username = usernameEditText.text.toString()
         val password = passwordEditText.text.toString()
+        val noteLabel = labelEditText.text.toString()
 
         // Check for an empty URL. Flag and abort if so.
         if (TextUtils.isEmpty(triliumAddress)) {
@@ -100,7 +113,7 @@ class LoginActivity : AppCompatActivity() {
 
             if (loginResult.success) {
                 // Store the address and api token.
-                TriliumSettings(this@LoginActivity).save(triliumAddress, loginResult.token!!)
+                TriliumSettings(this@LoginActivity).save(triliumAddress, loginResult.token!!, noteLabel)
                 // Announce our success.
                 Toast.makeText(this@LoginActivity, getString(R.string.connection_configured_correctly), Toast.LENGTH_LONG).show()
                 // End the activity.
@@ -185,6 +198,29 @@ class LoginActivity : AppCompatActivity() {
             Log.i(tag, "Token: $token")
 
             return@withContext LoginResult(true, null, token)
+        }
+    }
+
+    /**
+     * Checks the settings object and updates the UI to match the current state.
+     */
+    private fun setSetupStatus() {
+        val settings = TriliumSettings(this)
+
+        // Always attempt to restore the note label.
+        labelEditText.setText(settings.noteLabel)
+
+        if (!settings.isConfigured()) {
+            // Hide the logged-in indicator.
+            loggedInIndicator.visibility = View.INVISIBLE
+
+        } else {
+            // Populate the text editors for URL.
+            triliumAddressEditText.setText(settings.triliumAddress)
+            // Indicate successful login.
+            loggedInIndicator.visibility = View.VISIBLE
+            // TODO: This does not actually validate the current API Token.
+            // In the future we should update this to only show after a quick validation of the token.
         }
     }
 }

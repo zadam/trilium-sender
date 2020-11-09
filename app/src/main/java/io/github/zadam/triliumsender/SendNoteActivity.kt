@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
 import org.json.JSONObject
 
 class SendNoteActivity : AppCompatActivity() {
@@ -28,12 +30,18 @@ class SendNoteActivity : AppCompatActivity() {
         setContentView(R.layout.activity_send_note)
 
         val settings = TriliumSettings(this)
-
         if (!settings.isConfigured()) {
             // We can't do anything useful if we're not configured. Abort out.
             Toast.makeText(this, getString(R.string.sender_not_configured_note), Toast.LENGTH_LONG).show()
             finish()
             return
+        }
+        if (settings.noteLabel.isNotEmpty()) {
+            // We have a label to apply to this note! Indicate in the UI.
+            labelList.text = getString(R.string.label_preview_template, settings.noteLabel)
+        } else {
+            // Hide the label text preview.
+            labelList.visibility = View.GONE
         }
 
         // If we're a share-intent, pre-populate the note.
@@ -125,6 +133,7 @@ class SendNoteActivity : AppCompatActivity() {
      */
     private suspend fun sendNote(noteTitle: String, noteText: String, triliumAddress: String, apiToken: String): Boolean {
         val tag = "SendNoteCoroutine"
+        val settings = TriliumSettings(this)
 
         return withContext(Dispatchers.IO) {
             val client = OkHttpClient()
@@ -138,6 +147,16 @@ class SendNoteActivity : AppCompatActivity() {
                 json.put("title", noteTitle)
             }
             json.put("content", HtmlConverter().convertPlainTextToHtml(noteText))
+
+            if (settings.noteLabel.isNotEmpty()) {
+                // The api actually supports a list of key-value pairs, but for now we just write one label.
+                val label = JSONObject()
+                label.put("name", settings.noteLabel)
+                label.put("value", "")
+                val labelList = JSONArray()
+                labelList.put(label)
+                json.put("labels", labelList)
+            }
 
             val body = json.toString().toRequestBody(Utils.JSON)
 
