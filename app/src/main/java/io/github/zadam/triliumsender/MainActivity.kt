@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         if (resetSetup) {
-            TriliumSettings(this).save("", "")
+            TriliumSettings(this).save("", "", "")
         }
 
         setContentView(R.layout.activity_main)
