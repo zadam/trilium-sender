@@ -15,7 +15,7 @@
     <string name="note_text">Note text</string>
     <string name="setup_not_complete">Trilium connection setup isn\'t finished yet.</string>
     <string name="setup_is_complete">Trilium connection has been set up for address: %s. You can still change it by tapping the button below.</string>
-    <string name="please_use_other_shortcut">Please note that this view is used only for setup. For adding notes, use another shortcut called \'Add note\'. To add images, you need to share it to \'Trilium Sender\' from gallery app.</string>
+    <string name="please_use_other_shortcut">Please note that this view is used only for setup. For new notes, use the second \'Add note\' app shortcut installed with Trilium Sender. To add images, you need to share it to \'Trilium Sender\' from gallery app.</string>
     <string name="url_invalid">URL is invalid.</string>
     <string name="connection_configured_correctly">Trilium connection settings have been successfully configured.</string>
     <string name="sender_not_configured_image">Trilium Sender is not configured. Can\'t send the image.</string>
