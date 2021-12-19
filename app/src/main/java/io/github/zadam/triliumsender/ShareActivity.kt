@@ -18,6 +18,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
+import org.json.JSONObject
 
 
 class ShareActivity : AppCompatActivity() {
@@ -87,6 +89,19 @@ class ShareActivity : AppCompatActivity() {
      * @return the result of the attempted image send.
      */
     private suspend fun doSendImage(imageUri: Uri, mimeType: String, triliumAddress: String, apiToken: String): SendImageResult {
+        val settings = TriliumSettings(this)
+
+        val labelList = JSONArray()
+
+        if (settings.noteLabel.isNotEmpty()) {
+            // The api actually supports a list of key-value pairs, but for now we just write one label.
+            val label = JSONObject()
+            label.put("name", settings.noteLabel)
+            label.put("value", "")
+
+            labelList.put(label)
+        }
+
         return withContext(Dispatchers.IO) {
             val tag = "SendImageCoroutine"
 
@@ -98,6 +113,7 @@ class ShareActivity : AppCompatActivity() {
                     .url("$triliumAddress/api/sender/image")
                     .addHeader("Authorization", apiToken)
                     .addHeader("X-Local-Date", Utils.localDateStr())
+                    .addHeader("X-Labels", labelList.toString())
                     .post(requestBody)
                     .build()
 
