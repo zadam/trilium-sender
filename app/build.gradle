@@ -39,6 +39,7 @@ android {
         }
     }
     buildToolsVersion '32.0.0'
+    namespace 'io.github.zadam.triliumsender'
 }
 
 dependencies {

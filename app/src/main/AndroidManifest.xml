@@ -2,8 +2,7 @@
 <!-- The above suppression is necessary due to the <queries> tag, which is meaningless in older SDKs
      but is critical to looking up package names on Android devices running SDK 30.-->
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.github.zadam.triliumsender">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
