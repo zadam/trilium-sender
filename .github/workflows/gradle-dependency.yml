@@ -1,0 +1,19 @@
+name: Gradle Dependency Submission
+
+on:
+  push:
+    branches:
+      - main  # Change this to your default branch if different
+
+jobs:
+  submit-dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Submit Gradle dependencies
+      uses: gradle/gradle-dependency-submission@v1
+      with:
+        gradle-file: 'build.gradle'  # Adjust if your gradle file has a different name or path
